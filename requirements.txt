@@ -1,0 +1,8 @@
+opencv-python
+face_recognition
+pyttsx3
+scikit-learn
+joblib
+picamera2
+RPi.GPIO
+SpeechRecognition
