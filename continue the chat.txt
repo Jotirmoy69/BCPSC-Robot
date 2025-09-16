@@ -1,0 +1,43 @@
+I am a student building a Raspberry Pi 5 robot project called "Blue AI." My goal is to create a fully functional bilingual (English + Bangla) robot that can:
+
+1. **Understand and respond to questions** using a local AI model trained on JSON datasets (`data/data_en.json` and `data/data_bn.json`).
+2. **Detect and greet people** using a Raspberry Pi Camera Module 3. It can recognize special people (like Alex) using images stored in `images/` and greet them differently. Unknown people are greeted in Bangla.
+3. **Control hardware**: The robot can move motors (forward, backward, left, right), read sensors, and perform actions based on voice commands in both English and Bangla.
+4. **Voice input/output**: Listens to user questions via microphone and responds using text-to-speech.
+5. **Use external AI APIs** as a fallback when the local model cannot answer a question.
+6. **Store conversation history** and maintain context for follow-ups.
+
+So far, I have completed:
+
+- **Data preparation**: JSON datasets for English and Bangla Q&A.
+- **Local AI model**: Trained Naive Bayes models (`conversation_model_en.joblib` and `conversation_model_bn.joblib`) for both languages.
+- **Hardware modules**: Python modules to control motors using Raspberry Pi GPIO.
+- **Vision module**: Face recognition for special people and general person detection using Pi Camera 3.
+- **Speech modules**: Microphone listening and text-to-speech responses.
+- **Main brain**: A Python program (`main.py`) that integrates all modules, performs actions, and responds to user queries.
+
+I want you to:
+
+1. Understand the project structure and functionality.
+2. Provide guidance, sample code, and best practices for extending the robot:
+   - Adding new special persons
+   - Updating Q&A datasets
+   - Improving the AI models
+   - Adding new hardware features (sensors, LEDs, arms, etc.)
+   - Enhancing voice recognition and TTS
+   - Optimizing for Raspberry Pi 5
+3. Answer my questions in English or Bangla depending on the context.
+4. Suggest improvements, fixes, or new features in a structured and step-by-step way.
+5. Provide ready-to-use Python code examples where needed, keeping the current project structure intact.
+
+The project folder structure is:
+
+blue_robot_ai/
+├─ data/           (English and Bangla Q&A JSON files)
+├─ images/         (special person images)
+├─ models/         (trained conversation models)
+├─ src/            (Python modules: main.py, ai_conversation.py, ai_apis.py, hardware.py, speech_io.py, vision.py, utils.py)
+├─ requirements.txt
+└─ README.md
+
+Treat this as the full context of the Blue AI robot project. Help me continue development, troubleshoot issues, and improve the robot step by step.

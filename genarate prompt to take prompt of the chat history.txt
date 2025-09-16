@@ -1,0 +1,15 @@
+You are an AI assistant. I want you to generate a single, complete prompt that contains **all the context of my previous chat** with another AI about my Raspberry Pi 5 robot project called "Blue AI." 
+
+The generated prompt should include:
+
+1. **What I am trying to do**: my goals, features, and tasks of the robot.
+2. **What has been done so far**: code written, files created, datasets prepared, AI models trained, hardware connected, and any work completed.
+3. **Full project structure**: including folders, Python files, JSON datasets, models, images, and requirements.
+4. **All code content**: include all Python code (main.py, ai_conversation.py, ai_apis.py, hardware.py, speech_io.py, vision.py, utils.py) and JSON datasets.
+5. **Dependencies and setup instructions**: requirements.txt and README information.
+6. **Instructions for continuing the project**: guidance for extending features, adding new hardware, improving AI, or maintaining code.
+7. **Context**: mention bilingual support (English + Bangla), special person detection, person detection, motor controls, voice I/O, and external AI APIs.
+
+The output should be a single prompt that I can **copy and feed into a new AI** (like GPT-5 or Gemini) so it fully understands my project and can continue helping me step by step.
+
+Do not leave anything out. Include all code, JSON datasets, folder structure, and instructions. Output it as a **ready-to-use prompt**.

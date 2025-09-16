@@ -1,0 +1,258 @@
+I am building a Raspberry Pi 5 robot called "Blue AI." My goal is to make a bilingual (English + Bangla) robot that can:
+
+1. Answer questions from local JSON datasets.
+2. Detect and greet people using Pi Camera 3. Special people (like Alex) have custom greetings; unknown people get standard Bangla greetings.
+3. Control motors (forward, backward, left, right) and optionally sensors using Raspberry Pi GPIO.
+4. Listen via microphone and respond with text-to-speech.
+5. Use external AI APIs if the local model cannot answer a question.
+6. Maintain conversation memory for context.
+
+---
+
+# **Project File Structure**
+
+blue_robot_ai/
+├─ data/
+│  ├─ data_en.json
+│  └─ data_bn.json
+├─ images/
+│  └─ alex.jpg
+├─ models/
+│  ├─ conversation_model_en.joblib
+│  └─ conversation_model_bn.joblib
+├─ src/
+│  ├─ main.py
+│  ├─ ai_conversation.py
+│  ├─ ai_apis.py
+│  ├─ hardware.py
+│  ├─ speech_io.py
+│  ├─ vision.py
+│  └─ utils.py
+├─ requirements.txt
+└─ README.md
+
+---
+
+# **All Code Files**
+
+## data/data_en.json
+[
+  {"question": "What is your name?", "answer": "I am Blue, your school robot."},
+  {"question": "Where do you study?", "answer": "I study in Bogura High School."},
+  {"question": "What can you do?", "answer": "I can talk, move, detect people, and answer questions."},
+  {"question": "How are you?", "answer": "I am functioning perfectly!"}
+]
+
+## data/data_bn.json
+[
+  {"question": "তোমার নাম কি?", "answer": "আমি ব্লু, তোমার স্কুলের রোবট।"},
+  {"question": "তুমি কোথায় পড়াশোনা করো?", "answer": "আমি বগুড়া হাই স্কুলে পড়াশোনা করি।"},
+  {"question": "তুমি কি করতে পারো?", "answer": "আমি কথা বলতে পারি, চলতে পারি, মানুষ চিনতে পারি এবং প্রশ্নের উত্তর দিতে পারি।"},
+  {"question": "কেমন আছ?", "answer": "আমি ঠিকঠাক কাজ করছি!"}
+]
+
+## src/utils.py
+conversation_memory = []
+def is_bangla(text):
+    for c in text:
+        if '\u0980' <= c <= '\u09FF':
+            return True
+    return False
+
+## src/speech_io.py
+import pyttsx3
+import speech_recognition as sr
+engine = pyttsx3.init()
+recognizer = sr.Recognizer()
+def speak(text):
+    print("Robot:", text)
+    engine.say(text)
+    engine.runAndWait()
+def listen():
+    with sr.Microphone() as source:
+        print("Listening...")
+        audio = recognizer.listen(source, phrase_time_limit=5)
+        try:
+            text = recognizer.recognize_google(audio)
+            print("You:", text)
+            return text
+        except:
+            return ""
+
+## src/hardware.py
+import RPi.GPIO as GPIO
+import time
+MOTOR_LEFT = 17
+MOTOR_RIGHT = 27
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(MOTOR_LEFT, GPIO.OUT)
+GPIO.setup(MOTOR_RIGHT, GPIO.OUT)
+def move_forward(duration=1):
+    GPIO.output(MOTOR_LEFT, True)
+    GPIO.output(MOTOR_RIGHT, True)
+    time.sleep(duration)
+    GPIO.output(MOTOR_LEFT, False)
+    GPIO.output(MOTOR_RIGHT, False)
+def move_backward(duration=1):
+    GPIO.output(MOTOR_LEFT, False)
+    GPIO.output(MOTOR_RIGHT, False)
+    time.sleep(duration)
+def turn_left(duration=0.5):
+    GPIO.output(MOTOR_LEFT, False)
+    GPIO.output(MOTOR_RIGHT, True)
+    time.sleep(duration)
+    GPIO.output(MOTOR_LEFT, False)
+    GPIO.output(MOTOR_RIGHT, False)
+def turn_right(duration=0.5):
+    GPIO.output(MOTOR_LEFT, True)
+    GPIO.output(MOTOR_RIGHT, False)
+    time.sleep(duration)
+    GPIO.output(MOTOR_LEFT, False)
+    GPIO.output(MOTOR_RIGHT, False)
+def cleanup():
+    GPIO.cleanup()
+
+## src/ai_conversation.py
+import json
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+import joblib
+def train_model(json_file, model_file):
+    with open(json_file, encoding="utf-8") as f:
+        data = json.load(f)
+    questions = [item['question'] for item in data]
+    answers = [item['answer'] for item in data]
+    vectorizer = TfidfVectorizer()
+    X = vectorizer.fit_transform(questions)
+    model = MultinomialNB()
+    model.fit(X, answers)
+    joblib.dump((vectorizer, model), model_file)
+def load_model(model_file):
+    vectorizer, model = joblib.load(model_file)
+    return vectorizer, model
+def get_local_response(query, vectorizer, model):
+    X_test = vectorizer.transform([query])
+    return model.predict(X_test)[0]
+if __name__ == "__main__":
+    train_model("../data/data_en.json", "../models/conversation_model_en.joblib")
+    train_model("../data/data_bn.json", "../models/conversation_model_bn.joblib")
+
+## src/ai_apis.py
+def call_external_apis(query, lang="en"):
+    return None
+
+## src/vision.py
+from picamera2 import Picamera2
+import cv2
+import face_recognition
+from speech_io import speak
+import threading, time
+picam2 = Picamera2()
+picam2.configure(picam2.create_preview_configuration(main={"format": "XRGB8888", "size": (640, 480)}))
+picam2.start()
+person_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_fullbody.xml")
+known_face_encodings = []
+known_face_names = []
+alex_image = face_recognition.load_image_file("../images/alex.jpg")
+alex_encoding = face_recognition.face_encodings(alex_image)[0]
+known_face_encodings.append(alex_encoding)
+known_face_names.append("Alex")
+def greet_person(name):
+    if name == "Alex":
+        speak("Hello Alex! I am your robot.")
+    else:
+        speak("আসসালামু আলাইকুম")
+def person_detection():
+    while True:
+        frame = picam2.capture_array()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        persons = person_cascade.detectMultiScale(gray, 1.1, 4)
+        face_locations = face_recognition.face_locations(frame)
+        face_encodings = face_recognition.face_encodings(frame, face_locations)
+        for face_encoding in face_encodings:
+            matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+            name = "Unknown"
+            if True in matches:
+                first_match_index = matches.index(True)
+                name = known_face_names[first_match_index]
+            greet_person(name)
+            time.sleep(5)
+        if len(persons) > 0 and len(face_encodings) == 0:
+            greet_person("Unknown")
+            time.sleep(5)
+threading.Thread(target=person_detection, daemon=True).start()
+
+## src/main.py
+from utils import is_bangla, conversation_memory
+from speech_io import listen, speak
+from ai_conversation import load_model, get_local_response
+from hardware import move_forward, move_backward, turn_left, turn_right, cleanup
+from vision import person_detection
+from ai_apis import call_external_apis
+vectorizer_en, model_en = load_model("../models/conversation_model_en.joblib")
+vectorizer_bn, model_bn = load_model("../models/conversation_model_bn.joblib")
+def detect_action(text):
+    text_lower = text.lower()
+    if any(word in text_lower for word in ["forward", "go"]):
+        return move_forward
+    if any(word in text_lower for word in ["back", "backward"]):
+        return move_backward
+    if "left" in text_lower:
+        return turn_left
+    if "right" in text_lower:
+        return turn_right
+    if any(word in text for word in ["সামনে", "গো", "আগুন"]):
+        return move_forward
+    if any(word in text for word in ["পিছনে", "ব্যাক"]):
+        return move_backward
+    if "বামে" in text:
+        return turn_left
+    if "ডানে" in text:
+        return turn_right
+    return None
+def main():
+    speak("Hello! I am Blue, your bilingual robot assistant.")
+    try:
+        while True:
+            query = listen()
+            if not query:
+                continue
+            action = detect_action(query)
+            if action:
+                action()
+                response = "Action executed."
+                conversation_memory.append({"user": query, "bot": response})
+                speak(response)
+                continue
+            lang = "bn" if is_bangla(query) else "en"
+            if lang == "en":
+                response = get_local_response(query, vectorizer_en, model_en)
+            else:
+                response = get_local_response(query, vectorizer_bn, model_bn)
+            if not response:
+                response = call_external_apis(query, lang)
+            if not response:
+                response = "I am not sure about that." if lang=="en" else "আমি এটা বুঝতে পারিনি।"
+            conversation_memory.append({"user": query, "bot": response})
+            speak(response)
+    except KeyboardInterrupt:
+        speak("Shutting down...")
+    finally:
+        cleanup()
+if __name__ == "__main__":
+    main()
+
+## requirements.txt
+opencv-python
+face_recognition
+pyttsx3
+scikit-learn
+joblib
+picamera2
+RPi.GPIO
+SpeechRecognition
+
+## README.md
+# Blue AI Robot
+This is a Raspberry Pi 5 robot project called Blue AI.
+It has bilingual conversation, face recognition, person detection, motor control, and AI question answering.
